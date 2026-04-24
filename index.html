@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BP – מערכת ניטור דופק חכמה</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #0a0f1e; color: #e8eaf0; direction: rtl; text-align: right; scroll-behavior: smooth; }
+  a { color: inherit; text-decoration: none; }
+
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(10,15,30,0.88); backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 40px; height: 56px;
+  }
+  .nav-logo { font-size: 20px; font-weight: 800; color: #e53935; letter-spacing: -1px; }
+  .nav-links { display: flex; gap: 26px; }
+  .nav-links a { font-size: 13px; color: #8a9bb8; transition: color 0.2s; }
+  .nav-links a:hover { color: #fff; }
+
+  .hero {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0a0f1e 0%, #0d1a35 50%, #0a1628 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 100px 24px 60px; position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; width: 700px; height: 700px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(220,50,50,0.07) 0%, transparent 70%);
+    top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none;
+  }
+  .pulse-ring {
+    position: absolute; width: 500px; height: 500px; border-radius: 50%;
+    border: 1px solid rgba(220,50,50,0.12); top: 50%; left: 50%;
+    transform: translate(-50%,-50%); animation: pulse-expand 3s ease-out infinite;
+  }
+  .pulse-ring:nth-child(2) { animation-delay: 1s; }
+  .pulse-ring:nth-child(3) { animation-delay: 2s; }
+  @keyframes pulse-expand {
+    0%   { transform: translate(-50%,-50%) scale(0.6); opacity: 0.5; }
+    100% { transform: translate(-50%,-50%) scale(1.4); opacity: 0; }
+  }
+  .hero-badge {
+    display: inline-block; margin-bottom: 24px; position: relative; z-index: 1;
+    background: rgba(229,57,53,0.12); color: #ff6b6b;
+    border: 1px solid rgba(229,57,53,0.3); border-radius: 50px;
+    padding: 5px 16px; font-size: 12px; font-weight: 600; letter-spacing: 1px;
+  }
+  .hero-logo {
+    font-size: 100px; font-weight: 800; letter-spacing: -4px; line-height: 1; margin-bottom: 8px;
+    background: linear-gradient(135deg, #e53935, #ff6b6b);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    position: relative; z-index: 1;
+  }
+  .hero-subtitle { font-size: 18px; color: #8a9bb8; margin-bottom: 16px; position: relative; z-index: 1; }
+  .hero-title { font-size: 34px; font-weight: 700; color: #fff; margin-bottom: 14px; position: relative; z-index: 1; text-align: center; }
+  .hero-desc { font-size: 16px; color: #8a9bb8; max-width: 560px; line-height: 1.7; margin-bottom: 36px; position: relative; z-index: 1; text-align: center; }
+  .ecg-wrap { width: 100%; max-width: 520px; margin-bottom: 36px; position: relative; z-index: 1; }
+
+  .stats-row { display: flex; gap: 36px; flex-wrap: wrap; justify-content: center; margin-bottom: 40px; position: relative; z-index: 1; }
+  .stat-item { text-align: center; }
+  .stat-num { font-size: 34px; font-weight: 800; color: #fff; line-height: 1; }
+  .stat-label { font-size: 12px; color: #8a9bb8; margin-top: 4px; }
+
+  .btn-group { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; position: relative; z-index: 1; }
+  .btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 28px; border-radius: 50px; font-size: 15px; font-weight: 600; transition: all 0.2s; cursor: pointer; border: none; }
+  .btn-primary { background: linear-gradient(135deg,#e53935,#c62828); color: #fff; box-shadow: 0 4px 24px rgba(229,57,53,0.35); }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(229,57,53,0.5); }
+  .btn-secondary { background: rgba(255,255,255,0.06); color: #e8eaf0; border: 1px solid rgba(255,255,255,0.14); }
+  .btn-secondary:hover { background: rgba(255,255,255,0.11); transform: translateY(-2px); }
+
+  .sw { padding: 80px 24px; max-width: 1100px; margin: 0 auto; }
+  .sl { font-size: 11px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: #e53935; margin-bottom: 12px; }
+  .st { font-size: 34px; font-weight: 700; color: #fff; margin-bottom: 14px; line-height: 1.2; }
+  .sd { font-size: 15px; color: #8a9bb8; max-width: 600px; line-height: 1.7; margin-bottom: 44px; }
+  hr.d { border: none; border-top: 1px solid rgba(255,255,255,0.05); max-width: 1100px; margin: 0 auto; }
+
+  .fg { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px,1fr)); gap: 18px; }
+  .fc { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 26px; transition: all 0.2s; }
+  .fc:hover { background: rgba(255,255,255,0.07); border-color: rgba(229,57,53,0.3); transform: translateY(-4px); }
+  .fi { width: 46px; height: 46px; border-radius: 12px; background: rgba(229,57,53,0.14); display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 14px; }
+  .ft { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 7px; }
+  .fx { font-size: 13px; color: #8a9bb8; line-height: 1.6; }
+  .ftag { display: inline-block; margin-top: 10px; background: rgba(229,57,53,0.12); color: #ff8a80; border-radius: 50px; padding: 2px 10px; font-size: 11px; font-weight: 600; }
+
+  .cg { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 14px; }
+  .cc { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 18px 20px; transition: all 0.2s; }
+  .cc:hover { border-color: rgba(229,57,53,0.25); background: rgba(255,255,255,0.06); }
+  .cn { font-size: 15px; font-weight: 700; color: #ff6b6b; font-family: 'Courier New', monospace; margin-bottom: 6px; }
+  .cd { font-size: 13px; color: #8a9bb8; line-height: 1.5; }
+
+  .thg { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 16px; }
+  .thc { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 22px; text-align: center; }
+  .thv { font-size: 38px; font-weight: 800; line-height: 1; margin-bottom: 6px; }
+  .thu { font-size: 14px; color: #8a9bb8; margin-bottom: 6px; }
+  .thl { font-size: 13px; color: #8a9bb8; line-height: 1.5; }
+
+  .fl { display: flex; flex-direction: column; gap: 12px; }
+  .fr {
+    display: flex; align-items: flex-start; gap: 16px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px; padding: 20px 24px;
+    transition: all 0.2s;
+  }
+  .fr:hover { background: rgba(255,255,255,0.07); border-color: rgba(229,57,53,0.2); }
+  .fn {
+    width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+    background: rgba(229,57,53,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 800; color: #e53935;
+    margin-top: 2px;
+  }
+  .fco { flex: 1; }
+  .ftag2 { font-size: 11px; color: #e53935; font-weight: 700; margin-bottom: 5px; letter-spacing: 1px; text-transform: uppercase; }
+  .ftitle { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 6px; line-height: 1.3; }
+  .fdesc { font-size: 14px; color: #8a9bb8; line-height: 1.65; }
+
+  .tg { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px,1fr)); gap: 14px; }
+  .tc { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 18px 16px; text-align: center; }
+  .tn { font-size: 14px; font-weight: 600; color: #e8eaf0; margin-bottom: 4px; }
+  .tr { font-size: 12px; color: #8a9bb8; }
+  .ti { font-size: 22px; margin-bottom: 8px; }
+
+  .vp { background: rgba(255,255,255,0.03); border: 1px dashed rgba(229,57,53,0.35); border-radius: 16px; padding: 70px 40px; text-align: center; }
+
+  .teamg { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+  .teamc { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 32px 24px; text-align: center; width: 190px; transition: all 0.2s; }
+  .teamc:hover { transform: translateY(-4px); border-color: rgba(229,57,53,0.3); }
+  .teamav { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg,#e53935,#c62828); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: #fff; margin: 0 auto 16px; }
+  .teamn { font-size: 17px; font-weight: 600; color: #fff; }
+  .teamr { font-size: 12px; color: #8a9bb8; margin-top: 4px; }
+
+  .lg { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px,1fr)); gap: 14px; }
+  .lc { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 22px 24px; display: flex; align-items: center; gap: 14px; transition: all 0.2s; color: inherit; }
+  .lc:hover { background: rgba(255,255,255,0.07); border-color: rgba(229,57,53,0.3); transform: translateY(-2px); }
+  .li { width: 44px; height: 44px; border-radius: 10px; background: rgba(229,57,53,0.14); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .ll { font-size: 12px; color: #8a9bb8; margin-bottom: 2px; }
+  .lt { font-size: 15px; font-weight: 600; color: #e8eaf0; }
+
+  footer { text-align: center; padding: 40px 24px; font-size: 13px; color: #3a4a5e; border-top: 1px solid rgba(255,255,255,0.05); }
+
+  @media (max-width:600px) {
+    .hero-logo { font-size: 72px; }
+    .hero-title { font-size: 24px; }
+    nav { padding: 0 16px; }
+    .nav-links { gap: 14px; }
+    .nav-links a { font-size: 11px; }
+  }
+  .fstep {
+    display: flex; align-items: flex-start; gap: 8px;
+    font-size: 14px; color: #c8d0e0; line-height: 1.5;
+    padding: 3px 0;
+  }
+  .fstep + .fstep { border-top: 1px solid rgba(255,255,255,0.04); margin-top: 3px; padding-top: 6px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">BP</div>
+  <div class="nav-links">
+    <a href="#features">יכולות</a>
+    <a href="#bot">בוט</a>
+    <a href="#thresholds">ערכי סף</a>
+    <a href="#soa">ארכיטקטורה</a>
+    <a href="#team">הצוות</a>
+    <a href="#links">קישורים</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="pulse-ring"></div>
+  <div class="pulse-ring"></div>
+  <div class="pulse-ring"></div>
+
+  <svg class="ecg-wrap" viewBox="0 0 520 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <polyline points="0,45 55,45 72,45 82,18 95,65 107,8 118,60 132,45 195,45 215,45 226,28 237,58 245,45 310,45 328,45 338,18 351,65 363,8 374,60 388,45 520,45"
+      stroke="#e53935" stroke-width="2" stroke-linejoin="round" fill="none"
+      style="filter:drop-shadow(0 0 5px rgba(229,57,53,0.6));"/>
+  </svg>
+
+  <div class="hero-badge">IoT PROJECT · מכללת אונו · תשפ"ו</div>
+  <div class="hero-logo">BP</div>
+  <div class="hero-subtitle">Blood Pressure &amp; Heart Monitor</div>
+  <h1 class="hero-title">מערכת ניטור דופק חכמה</h1>
+  <p class="hero-desc">ניטור דופק ורמת חמצן בדם (SpO2) בזמן אמת. התראות חכמות לטלגרם, אחסון היסטורי בענן, ופרופיל אישי מותאם לכל משתמש.</p>
+
+  <div class="stats-row">
+    <div class="stat-item"><div class="stat-num">50–100</div><div class="stat-label">BPM טווח תקין</div></div>
+    <div class="stat-item"><div class="stat-num">95%+</div><div class="stat-label">SpO2 מינימום תקין</div></div>
+    <div class="stat-item"><div class="stat-num">20s</div><div class="stat-label">משך כל מדידה</div></div>
+    <div class="stat-item"><div class="stat-num">±15</div><div class="stat-label">BPM סף סטייה אישית</div></div>
+  </div>
+
+  <div class="btn-group">
+    <a href="#video" class="btn btn-primary">▶ סרטון שיווקי</a>
+    <a href="https://github.com/edwardnepo/bp" target="_blank" class="btn btn-secondary">⌨ קוד מקור</a>
+    <a href="#features" class="btn btn-secondary">↓ גלה עוד</a>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section class="sw" id="features">
+  <div class="sl">יכולות המערכת</div>
+  <h2 class="st">מה HeartWatch יודעת לעשות?</h2>
+  <p class="sd">מכשיר המשלב חומרה, עיבוד אותות חכם, ענן וממשק טלגרם – הכל עובד ביחד.</p>
+  <div class="fg">
+    <div class="fc"><div class="fi">❤️</div><div class="ft">ניטור דופק בזמן אמת</div><div class="fx">חיישן MAX30100 עם אלגוריתם Peak Detection וסינון דינמי (dynamic threshold) – BPM מחושב בדיוק מאות PPG גולמי.</div><span class="ftag">20 שניות מדידה</span></div>
+    <div class="fc"><div class="fi">🩸</div><div class="ft">מדידת SpO2</div><div class="fx">אומדן רמת חמצן בדם לפי יחס AC/DC של אותות IR ו-Red, עם משוואה אמפירית: SpO2 ≈ 110 − 25R.</div><span class="ftag">ערך תקין ≥95%</span></div>
+    <div class="fc"><div class="fi">🔔</div><div class="ft">3 שכבות התראה</div><div class="fx">סף קבוע (50/100 BPM), סף אישי (±15 BPM מממוצעך ב-30 יום), וסף SpO2 (מתחת ל-95%) – כל שכבה שולחת הודעה נפרדת.</div><span class="ftag">ניתן לכיבוי</span></div>
+    <div class="fc"><div class="fi">👤</div><div class="ft">פרופיל אישי + BMI</div><div class="fx">הרשמה בת 5 שלבים: שם, גיל, מין, משקל, גובה. BMI מחושב אוטומטית ונשמר לכל משתמש בנפרד ב-Firebase.</div><span class="ftag">BMI אוטומטי</span></div>
+    <div class="fc"><div class="fi">☁️</div><div class="ft">Firebase Realtime DB</div><div class="fx">כל מדידה נשמרת עם timestamp, BPM, SpO2 וסטטוס התראה. מבנה נתונים: users/{uid}/measurements ו-/profile.</div><span class="ftag">Real-time sync</span></div>
+    <div class="fc"><div class="fi">📊</div><div class="ft">דוח שבועי + מגמות</div><div class="fx">ממוצע, מינימום, מקסימום, וזיהוי מגמה: ⬆️ עולה / ⬇️ יורדת / ➡️ יציבה – לפי השוואה בין חצאי השבוע.</div><span class="ftag">7 ימים אחרונים</span></div>
+    <div class="fc"><div class="fi">🖥️</div><div class="ft">מסך LCD מקומי</div><div class="fx">מסך LCD מציג BPM בזמן אמת במהלך המדידה דרך I2C – ללא צורך בטלפון. מציג "System Ready" בהמתנה.</div><span class="ftag">I2C Protocol</span></div>
+    <div class="fc"><div class="fi">⚙️</div><div class="ft">הגדרות + Inline KB</div><div class="fx">כיבוי/הפעלת התראות ועדכון פרופיל דרך InlineKeyboard אינטראקטיבי. כל שינוי נשמר מיד ב-Firebase.</div><span class="ftag">Inline Keyboard</span></div>
+  </div>
+</section>
+
+<hr class="d">
+
+<!-- BOT COMMANDS -->
+<section class="sw" id="bot">
+  <div class="sl">Telegram Bot</div>
+  <h2 class="st">פקודות הבוט</h2>
+  <p class="sd">ממשק מלא דרך הטלגרם – מדידות, דוחות, פרופיל והגדרות עם ReplyKeyboard ו-InlineKeyboard.</p>
+  <div class="cg">
+    <div class="cc"><div class="cn">/start</div><div class="cd">הרשמה למערכת בת 5 שלבים. משתמש חוזר מקבל כפתור "🚀 התחל" עם InlineKeyboard.</div></div>
+    <div class="cc"><div class="cn">/register</div><div class="cd">עדכון פרופיל מחדש – מאפס את כל הפרטים ומתחיל את תהליך ההרשמה מהתחלה.</div></div>
+    <div class="cc"><div class="cn">❤️ מדידה</div><div class="cd">מפעיל מדידת 20 שניות עם הנחיה להניח אצבע. מדידה נוספת אפשרית רק לאחר סיום.</div></div>
+    <div class="cc"><div class="cn">📊 דוח שבועי</div><div class="cd">סיכום 7 ימים אחרונים: ממוצע, מגמה, SpO2 ומספר התראות שנשלחו.</div></div>
+    <div class="cc"><div class="cn">👤 הפרופיל שלי</div><div class="cd">פרטים אישיים, BMI וסטטיסטיקת 30 ימים: ממוצע BPM, ממוצע SpO2, מספר מדידות.</div></div>
+    <div class="cc"><div class="cn">⚙️ הגדרות</div><div class="cd">כיבוי/הפעלת התראות ועדכון פרופיל דרך InlineKeyboard אינטראקטיבי.</div></div>
+    <div class="cc"><div class="cn">/cancel</div><div class="cd">ביטול תהליך ההרשמה בכל שלב שהוא.</div></div>
+  </div>
+</section>
+
+<hr class="d">
+
+<!-- THRESHOLDS -->
+<section class="sw" id="thresholds">
+  <div class="sl">ערכי סף להתראות</div>
+  <h2 class="st">מתי המערכת מתריאה?</h2>
+  <p class="sd">3 שכבות בדיקה בכל מדידה – כל שכבה שולחת התראה נפרדת לטלגרם.</p>
+  <div class="thg">
+    <div class="thc" style="border-color:rgba(229,57,53,0.4)"><div class="thv" style="color:#ef5350">40</div><div class="thu">BPM</div><div class="thl">ברדיקרדיה חמורה 🚨<br><span style="font-size:11px;color:#555">התראה דחופה</span></div></div>
+    <div class="thc" style="border-color:rgba(33,150,243,0.3)"><div class="thv" style="color:#42a5f5">50</div><div class="thu">BPM</div><div class="thl">דופק נמוך ⬇️<br><span style="font-size:11px;color:#555">ברדיקרדיה</span></div></div>
+    <div class="thc" style="border-color:rgba(76,175,80,0.3)"><div class="thv" style="color:#66bb6a">50–100</div><div class="thu">BPM</div><div class="thl">טווח תקין ✅<br><span style="font-size:11px;color:#555">אין התראה</span></div></div>
+    <div class="thc" style="border-color:rgba(229,57,53,0.3)"><div class="thv" style="color:#ef5350">100</div><div class="thu">BPM</div><div class="thl">דופק גבוה ⬆️<br><span style="font-size:11px;color:#555">טכיקרדיה</span></div></div>
+    <div class="thc" style="border-color:rgba(255,152,0,0.3)"><div class="thv" style="color:#ffa726">±15</div><div class="thu">BPM</div><div class="thl">סטייה אישית<br><span style="font-size:11px;color:#555">מממוצע 30 יום</span></div></div>
+    <div class="thc" style="border-color:rgba(156,39,176,0.3)"><div class="thv" style="color:#ab47bc">95%</div><div class="thu">SpO2</div><div class="thl">חמצן נמוך 🩸<br><span style="font-size:11px;color:#555">תקין ≥97%</span></div></div>
+  </div>
+</section>
+
+<hr class="d">
+
+<!-- USE CASES -->
+<section class="sw">
+  <div class="sl">תרחישי שימוש</div>
+  <h2 class="st">איך זה עובד בפועל?</h2>
+  <div class="fl">
+    <div class="fr"><div class="fn">1</div><div class="fco"><div class="ftag2">מדידה שגרתית</div><div class="ftitle">ניטור יומיומי</div><div class="fdesc">
+  <div class="fstep">🖐️ מניח אצבע על חיישן MAX30100</div>
+  <div class="fstep">⏱️ מדידה של 20 שניות</div>
+  <div class="fstep">🖥️ BPM ו-SpO2 מוצגים על מסך ה-LCD</div>
+  <div class="fstep">☁️ הנתונים נשמרים ב-Firebase עם timestamp</div>
+</div></div></div>
+    <div class="fr"><div class="fn">2</div><div class="fco"><div class="ftag2">התראת חירום</div><div class="ftitle">דופק מעל 100 BPM</div><div class="fdesc">
+  <div class="fstep">📈 דופק עולה מעל 100 BPM</div>
+  <div class="fstep">🔍 המערכת מזהה חריגה מהסף הקבוע</div>
+  <div class="fstep">🚨 הודעה דחופה נשלחת לטלגרם</div>
+  <div class="fstep">⚠️ אם יש גם חריגה אישית – התראה נוספת עם הסטייה</div>
+</div></div></div>
+    <div class="fr"><div class="fn">3</div><div class="fco"><div class="ftag2">SpO2 נמוך</div><div class="ftitle">חמצן מתחת ל-95%</div><div class="fdesc">
+  <div class="fstep">🩸 SpO2 נמדד מתחת ל-95%</div>
+  <div class="fstep">🚨 התראה נפרדת עם הערך המדויק</div>
+  <div class="fstep">🏥 המלצה לפנות לרופא</div>
+</div></div></div>
+    <div class="fr"><div class="fn">4</div><div class="fco"><div class="ftag2">דוח תקופתי</div><div class="ftitle">סיכום שבועי</div><div class="fdesc">
+  <div class="fstep">📊 לחיצה על "דוח שבועי" בבוט</div>
+  <div class="fstep">☁️ Firebase מושך נתוני 7 ימים אחרונים</div>
+  <div class="fstep">📉 ממוצע, מגמה ו-SpO2 מחושבים</div>
+  <div class="fstep">💬 סיכום מלא נשלח לצ'אט</div>
+</div></div></div>
+    <div class="fr"><div class="fn">5</div><div class="fco"><div class="ftag2">משתמש חדש</div><div class="ftitle">תהליך הרשמה</div><div class="fdesc">
+  <div class="fstep">👋 שליחת /start לבוט</div>
+  <div class="fstep">📝 5 שאלות: שם, גיל, מין, משקל, גובה</div>
+  <div class="fstep">🧮 BMI מחושב אוטומטית</div>
+  <div class="fstep">✅ פרופיל נשמר ב-Firebase</div>
+</div></div></div>
+  </div>
+</section>
+
+<hr class="d">
+
+<!-- SOA -->
+<section class="sw" id="soa">
+  <div class="sl">ארכיטקטורה</div>
+  <h2 class="st">ארבעת שכבות ה-SOA</h2>
+  <div class="fl">
+    <div class="fr"><div class="fn">1</div><div class="fco"><div class="ftag2">Perception Layer — שכבת החישה</div><div class="ftitle">חיישן MAX30100</div><div class="fdesc">קריאת אותות IR ו-Red דרך I2C (כתובת 0x57, bus 1). נתונים גולמיים נכנסים למעבד כל 40ms בערך.</div></div></div>
+    <div class="fr"><div class="fn">2</div><div class="fco"><div class="ftag2">Network Layer — שכבת הרשת</div><div class="ftitle">Raspberry Pi + Wi-Fi</div><div class="fdesc">עיבוד מקומי (Peak Detection, dynamic threshold, SpO2) ושידור תוצאות לענן דרך HTTPS / REST.</div></div></div>
+    <div class="fr"><div class="fn">3</div><div class="fco"><div class="ftag2">Middleware Layer — שכבת השירות</div><div class="ftitle">Firebase Realtime Database</div><div class="fdesc">אחסון לפי users/{uid}/measurements ו-users/{uid}/profile. סנכרון מיידי, גישה מרובת-לקוחות.</div></div></div>
+    <div class="fr"><div class="fn">4</div><div class="fco"><div class="ftag2">Application Layer — שכבת האפליקציה</div><div class="ftitle">Telegram Bot + LCD Display</div><div class="fdesc">ממשק כפול: LCD מקומי לתצוגה מיידית + Telegram Bot עם ReplyKeyboard ו-InlineKeyboard מלאים.</div></div></div>
+  </div>
+</section>
+
+<hr class="d">
+
+<!-- TECH STACK -->
+<section class="sw">
+  <div class="sl">טכנולוגיות</div>
+  <h2 class="st">Stack טכנולוגי</h2>
+  <div class="tg">
+    <div class="tc"><div class="ti">🖥️</div><div class="tn">Raspberry Pi</div><div class="tr">מחשב מיקרו מרכזי</div></div>
+    <div class="tc"><div class="ti">❤️</div><div class="tn">MAX30100</div><div class="tr">חיישן PPG / SpO2</div></div>
+    <div class="tc"><div class="ti">📟</div><div class="tn">I2C LCD</div><div class="tr">תצוגה מקומית</div></div>
+    <div class="tc"><div class="ti">🐍</div><div class="tn">Python 3</div><div class="tr">לוגיקה מרכזית</div></div>
+    <div class="tc"><div class="ti">⚡</div><div class="tn">asyncio</div><div class="tr">מדידה א-סינכרונית</div></div>
+    <div class="tc"><div class="ti">📦</div><div class="tn">smbus2</div><div class="tr">תקשורת I2C</div></div>
+    <div class="tc"><div class="ti">🔥</div><div class="tn">Firebase RT DB</div><div class="tr">ענן ואחסון נתונים</div></div>
+    <div class="tc"><div class="ti">✈️</div><div class="tn">Telegram API</div><div class="tr">ממשק משתמש</div></div>
+    <div class="tc"><div class="ti">🐙</div><div class="tn">GitHub</div><div class="tr">ניהול גרסאות</div></div>
+  </div>
+</section>
+
+<hr class="d">
+
+<!-- VIDEO -->
+<section class="sw" id="video">
+  <div class="sl">סרטון שיווקי</div>
+  <h2 class="st">ראו את זה בפעולה</h2>
+  <div class="vp">
+    <div style="font-size:52px;margin-bottom:14px">▶</div>
+    <div style="font-size:18px;font-weight:600;color:#fff;margin-bottom:6px">הסרטון יעלה כאן</div>
+    <div style="font-size:14px;color:#8a9bb8">הכניסו את הלינק לסרטון לאחר שתעלו אותו</div>
+  </div>
+</section>
+
+<hr class="d">
+
+<!-- TEAM -->
+<section class="sw" id="team">
+  <div class="sl">הצוות</div>
+  <h2 class="st">מי בנה את זה?</h2>
+  <div class="teamg">
+    <div class="teamc"><div class="teamav">א</div><div class="teamn">אדוארד</div><div class="teamr">מפתח</div></div>
+    <div class="teamc"><div class="teamav">ע</div><div class="teamn">עינב</div><div class="teamr">מפתחת</div></div>
+    <div class="teamc"><div class="teamav">א</div><div class="teamn">אגם</div><div class="teamr">מפתחת</div></div>
+  </div>
+</section>
+
+<hr class="d">
+
+<!-- LINKS -->
+<section class="sw" id="links">
+  <div class="sl">קישורים</div>
+  <h2 class="st">לכל המשאבים</h2>
+  <div class="lg">
+    <a href="https://github.com/edwardnepo/bp" target="_blank" class="lc"><div class="li">📁</div><div><div class="ll">קוד מקור</div><div class="lt">GitHub Repository</div></div></a>
+    <a href="#video" class="lc"><div class="li">🎬</div><div><div class="ll">צפייה</div><div class="lt">סרטון שיווקי</div></div></a>
+    <a href="#" class="lc"><div class="li">📄</div><div><div class="ll">קריאה</div><div class="lt">דוח סופי</div></div></a>
+  </div>
+</section>
+
+<footer>
+  <div style="font-size:15px;color:#e8eaf0;font-weight:600;margin-bottom:6px">BP – HeartWatch · מערכת ניטור דופק חכמה</div>
+  <div>פרויקט ב-IoT · מכללת אונו · תשפ"ו · אדוארד, עינב ואגם</div>
+  <div style="margin-top:8px;font-size:11px;color:#2a3a4e">⚠️ המערכת מיועדת ללמידה בלבד ואינה מחליפה מכשיר רפואי מוסמך</div>
+</footer>
+
+</body>
+</html>
