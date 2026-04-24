@@ -13,7 +13,9 @@ from telegram.request import HTTPXRequest
 import lcddriver
 from datetime import datetime, timedelta
 import statistics
-
+import os
+from dotenv import load_dotenv
+load_dotenv()
 # ─────────────────────────────────────────────
 #  Firebase
 # ─────────────────────────────────────────────
@@ -29,7 +31,7 @@ except Exception as e:
 # ─────────────────────────────────────────────
 #  הגדרות טלגרם
 # ─────────────────────────────────────────────
-TOKEN = '8488607418:AAF8KAXxb9-a0Iq1bs1khhRmnTF6S46QaoU'
+TOKEN = os.getenv('TELEGRAM_TOKEN')
 request_config = HTTPXRequest(connect_timeout=30.0, read_timeout=30.0)
 application = ApplicationBuilder().token(TOKEN).request(request_config).build()
 
