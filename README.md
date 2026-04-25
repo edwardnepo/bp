@@ -38,10 +38,10 @@
 
 | שכבה | תיאור |
 |---|---|
-| **שכבת החומרה** (Hardware) | איסוף נתונים פיזי באמצעות חיישן MAX30100 ועיבוד ב-Raspberry Pi 5 |
-| **שכבת השירותים הבסיסיים** (Basic Services) | ספריות Python ופרוטוקול I2C לתקשורת עם החיישן והמסך |
-| **שכבת הפלטפורמה** (Platform Services) | ניהול נתונים בענן (Firebase) ותקשורת רשת בזמן אמת |
-| **שכבת האפליקציה** (Application Services) | ממשק המשתמש בטלגרם, שליחת התראות והצגת נתונים על LCD |
+| **Perception Layer — שכבת החישה** | חיישן MAX30100 קורא אותות IR ו-Red דרך I2C (כתובת 0x57). נתונים גולמיים נכנסים כל 40ms |
+| **Network Layer — שכבת הרשת** | Raspberry Pi מעבד מקומית (Peak Detection, SpO2) ומשדר לענן דרך HTTPS / REST |
+| **Middleware Layer — שכבת השירות** | Firebase שומר לפי users/{uid}/measurements ו-/profile. סנכרון מיידי, גישה מרובת-לקוחות |
+| **Application Layer — שכבת האפליקציה** | ממשק כפול: LCD מקומי + Telegram Bot עם ReplyKeyboard ו-InlineKeyboard |
 
 ---
 
