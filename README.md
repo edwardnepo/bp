@@ -155,8 +155,7 @@ ping google.com
 ## 🔗 קישורים
 
 - 🌐 [דף נחיתה](https://edwardnepo.github.io/bp)
-- 🎬 סרטון שיווקי – יעודכן בקרוב
-
+- 🎬 סרטון שיווקי – https://drive.google.com/file/d/1XO0gxM7KVI2hgm3e4NyzVK5iztdmD8_r/view?usp=sharing
 ---
 
 *פרויקט ב-IoT | מכללת אונו | תשפ"ו*
